@@ -1,5 +1,4 @@
 altair==5.5.0
-
 asttokens==3.0.0
 attrs==25.3.0
 backcall==0.2.0
