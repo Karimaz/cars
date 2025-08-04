@@ -22,7 +22,6 @@ st.write(f"OpenCV version: {cv2.__version__}")
 CAR_IMG_URL = "https://doktorly.de/ksa_cars"
 
 def list_remote_folders(url):
-    # This assumes the server returns a JSON list of folder names at the URL
     try:
         resp = requests.get(url + "/folders.json")
         resp.raise_for_status()
@@ -33,12 +32,28 @@ def list_remote_folders(url):
 
 car_folders = list_remote_folders(CAR_IMG_URL)
 selected_folder = st.selectbox("Select Car Folder", car_folders)
-car_files = [f for f in requests.get(f"{CAR_IMG_URL}/{selected_folder}/index.json").json()
-             if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+
+# Get list of images in the selected folder
+try:
+    car_files_resp = requests.get(f"{CAR_IMG_URL}/{selected_folder}/index.json")
+    car_files_resp.raise_for_status()
+    car_files = [f for f in car_files_resp.json()
+                 if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+except Exception as e:
+    st.error(f"Failed to fetch car images: {e}")
+    st.stop()
+
+# Car image selection
 car_names = [os.path.splitext(fn)[0] for fn in car_files]
 selected_car_name = st.selectbox("Select Car Image", car_names)
 selected_car = car_files[car_names.index(selected_car_name)]
-car = cv2.cvtColor(cv2.imread(os.path.join(CAR_IMG_DIR, selected_folder, selected_car)), cv2.COLOR_BGR2RGB)
+
+# ✅ Correct way to load and convert remote image with OpenCV
+image_url = f"{CAR_IMG_URL}/{selected_folder}/{selected_car}"
+resp = requests.get(image_url)
+img_array = np.asarray(bytearray(resp.content), dtype=np.uint8)
+car = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+car = cv2.cvtColor(car, cv2.COLOR_BGR2RGB)
 
 # Background selection
 bg_files = sorted(
