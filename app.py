@@ -33,8 +33,8 @@ def list_remote_folders(url):
 
 car_folders = list_remote_folders(CAR_IMG_URL)
 selected_folder = st.selectbox("Select Car Folder", car_folders)
-car_files = sorted(fn for fn in os.listdir(os.path.join(CAR_IMG_DIR, selected_folder))
-                   if fn.lower().endswith((".png", ".jpg", ".jpeg")))
+car_files = [f for f in requests.get(f"{CAR_IMG_URL}/{selected_folder}/index.json").json()
+             if f.lower().endswith((".png", ".jpg", ".jpeg"))]
 car_names = [os.path.splitext(fn)[0] for fn in car_files]
 selected_car_name = st.selectbox("Select Car Image", car_names)
 selected_car = car_files[car_names.index(selected_car_name)]
